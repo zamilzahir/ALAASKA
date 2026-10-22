@@ -1,0 +1,36 @@
+/* Suggested-symbols row, pinned above the existing Quick Insert toolbar. */
+.symbol-palette {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  background: #e6f7f5;
+  border-bottom: 2px solid #20b2aa;
+}
+
+.symbol-palette-title {
+  font-weight: 600;
+  color: #147a75;
+  font-size: 0.9rem;
+  margin-right: 0.4rem;
+}
+
+.symbol-palette-key {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 0.6rem;
+  background: #ffffff;
+  border: 1px solid #20b2aa;
+  border-radius: 6px;
+  color: #2c3e50;
+  font-family: 'Times New Roman', serif;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.symbol-palette-key:hover {
+  background: #20b2aa;
+  color: #ffffff;
+}

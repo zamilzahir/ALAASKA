@@ -4,8 +4,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeMathjax from 'rehype-mathjax';
+import SymbolPalette from './SymbolPalette';
+import { PRESETS, symbolsFromIds } from '../symbols';
+import '../styles/symbol_palette.css';
 
-export default function LatexEditor({ value, onChange, onSubmit, onKeyDown, onPaste, placeholder }) {
+export default function LatexEditor({ value, onChange, onSubmit, onKeyDown, onPaste, placeholder, suggestedSymbols }) {
+  // Symbols for this assignment. Until the professor's picker exists, fall back to a preset for testing.
+  const paletteSymbols = suggestedSymbols ?? symbolsFromIds(PRESETS['Discrete Math (CMPSC 360)']);
   const textareaRef = useRef(null);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [history, setHistory] = useState([value || '']);
@@ -220,7 +225,9 @@ const insertAtCursor = (text, isBlock = false, needsMath = false, moveCursorBack
       textToInsert = `$${text}$ `;
     }
     newValue = currentValue.substring(0, start) + textToInsert + currentValue.substring(end);
-    newCursorPos = start + textToInsert.length - moveCursorBack;
+    // If we wrapped the text in "$...$ ", step back over those 2 extra characters too.
+    const wrapExtra = (moveCursorBack > 0 && textToInsert !== text) ? 2 : 0;
+    newCursorPos = start + textToInsert.length - moveCursorBack - wrapExtra;
   }
   
   onChange({ target: { value: newValue } });
@@ -285,6 +292,11 @@ const insertAtCursor = (text, isBlock = false, needsMath = false, moveCursorBack
 
   return (
     <div className="latex-editor">
+      {/* Suggested symbols for this assignment */}
+      <SymbolPalette
+        symbols={paletteSymbols}
+        onInsert={(sym) => insertAtCursor(sym.latex, false, true, sym.back || 0)}
+      />
       {/* Toolbar */}
       <div className="latex-toolbar">
         <div className="toolbar-section">
