@@ -6,6 +6,7 @@ import remarkMath from 'remark-math';
 import rehypeMathjax from 'rehype-mathjax';
 import api from '../api/axios';
 import LatexEditor from './LatexEditor';
+import { PRESETS, symbolsFromIds } from '../symbols';
 import '../styles/assignment_chat.css';
 import {
   initTelemetry,
@@ -74,9 +75,15 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
       if (meta?.is_assignment_chat && meta?.assignment_id) {
         try {
           const assignmentRes = await api.get(`/assignments/${meta.assignment_id}`);
+          // Symbols the professor chose for this assignment (a list of ids from symbols.js).
+          // TEMPORARY: until the professor's picker saves them, fall back to the Discrete Math preset.
+          const symbolIds = assignmentRes.data.symbols?.length
+            ? assignmentRes.data.symbols
+            : PRESETS['Discrete Math (CMPSC 360)'];
           setMetadata(prev => ({
             ...prev,
-            assignment_title: assignmentRes.data.title
+            assignment_title: assignmentRes.data.title,
+            assignment_symbols: symbolsFromIds(symbolIds)
           }));
         } catch (err) {
           console.error('Failed to load assignment title:', err);
@@ -422,6 +429,7 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 placeholder="Type your answer using Markdown and LaTeX..."
+                suggestedSymbols={metadata?.is_assignment_chat ? metadata?.assignment_symbols : null}
               />
               <div className="latex-submit-bar">
                 <button 

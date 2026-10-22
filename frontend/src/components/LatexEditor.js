@@ -5,12 +5,11 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeMathjax from 'rehype-mathjax';
 import SymbolPalette from './SymbolPalette';
-import { PRESETS, symbolsFromIds } from '../symbols';
 import '../styles/symbol_palette.css';
 
 export default function LatexEditor({ value, onChange, onSubmit, onKeyDown, onPaste, placeholder, suggestedSymbols }) {
-  // Symbols for this assignment. Until the professor's picker exists, fall back to a preset for testing.
-  const paletteSymbols = suggestedSymbols ?? symbolsFromIds(PRESETS['Discrete Math (CMPSC 360)']);
+  // Symbols for this assignment. Empty in normal chats, so no row is shown there.
+  const paletteSymbols = suggestedSymbols || [];
   const textareaRef = useRef(null);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [history, setHistory] = useState([value || '']);
