@@ -33,3 +33,5 @@ services:
         sync: false
       - key: FRONTEND_URL        # your Vercel URL, e.g. https://alaaska-zamil.vercel.app
         sync: false
+      - key: ADMIN_EMAILS        # testers who become admin on first login (comma-separated, verified emails only)
+        sync: false

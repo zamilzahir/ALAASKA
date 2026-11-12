@@ -8,6 +8,7 @@ from backend.db_mongo import users_collection
 from backend.config import AUTH0_DOMAIN, AUTH0_API_AUDIENCE, ALGORITHM
 import logging
 from typing import Optional
+import os
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)
@@ -187,6 +188,12 @@ async def _fetch_userinfo(access_token: str) -> dict:
         logger.error(f"[AUTH] Error fetching user info from API: {type(e).__name__}: {str(e)}")
         raise HTTPException(status_code=401, detail="Failed to fetch user info")
 
+# Emails that become admins automatically on login (comma-separated env var), e.g. for testers:
+#   ADMIN_EMAILS=prof@psu.edu,tester@psu.edu
+# Leave unset to manage admins only in the database.
+ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()}
+
+
 async def get_or_create_user(auth0_id: str, email: str, name: str) -> dict:
     """Get user from database or create if doesn't exist (optimized with single query)"""
     logger.info(f"[AUTH] Getting or creating user: {email} (auth0_id: {auth0_id})")
@@ -246,6 +253,22 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(http_bea
         # Step 3: Get or create user in database (single optimized query)
     
         user_doc = await get_or_create_user(user_id, email, name)
+
+        # Pre-approved admins (ADMIN_EMAILS): grant once, on their first login, and only if
+        # Auth0 confirms they own the email (so nobody can sign up with someone else's address).
+        if email and email.lower() in ADMIN_EMAILS and not user_doc.get("is_admin", False):
+            verified = user_info.get("email_verified") is True
+            if not verified:
+                try:
+                    verified = (await get_userinfo_from_api(token)).get("email_verified") is True
+                except Exception as e:
+                    logger.warning(f"[AUTH] Could not check email_verified for {email}: {e}")
+            if verified:
+                await users_collection.update_one({"auth0_id": user_id}, {"$set": {"is_admin": True}})
+                user_doc["is_admin"] = True
+                logger.info(f"[AUTH] Granted admin from ADMIN_EMAILS: {email}")
+            else:
+                logger.warning(f"[AUTH] {email} is in ADMIN_EMAILS but not verified; admin not granted")
         
         logger.info(f"[AUTH] Returning user data for: {email}")
         

@@ -41,3 +41,11 @@ Applications -> ALAASKA app -> Settings: add the Vercel URL to **Allowed Callbac
 3. The admin tester creates a template + assignment; the student tester accepts and works on it.
 
 Costs: Vercel and Render free; OpenAI usage is billed to the key you configure.
+
+## Pre-approving testers (no database editing)
+
+- **Admin tester:** in Render → Environment, set `ADMIN_EMAILS` to their email (comma-separate several).
+  They become admin automatically on first login, as long as Auth0 shows the email as verified
+  (Google logins always are; email/password sign-ups must click Auth0's verification email first).
+- **Student tester:** put their email in the assignment's allowed students when creating it.
+  It can be added before they ever log in; the assignment appears on their first login.
