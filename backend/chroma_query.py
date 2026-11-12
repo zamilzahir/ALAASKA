@@ -1,6 +1,3 @@
-from sentence_transformers import SentenceTransformer
-import chromadb
-from chromadb.config import Settings
 import logging
 from typing import Optional, List, Dict
 import os
@@ -12,15 +9,25 @@ logger = logging.getLogger(__name__)
 script_dir = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(script_dir, "ds442_vdb")
 
-try:
-    embedding_model = SentenceTransformer('BAAI/bge-base-en-v1.5')
-    client = chromadb.PersistentClient(path=db_path, settings=Settings(allow_reset=True))
-    collection = client.get_collection(name="ds442_hw_sol")
-    logger.info("ChromaDB initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize ChromaDB: {e}")
-    embedding_model = None
-    collection = None
+# The DS 442 homework search needs ChromaDB + a local embedding model (~1-2 GB RAM).
+# Set ENABLE_RAG=false (e.g. on a small cloud server) to skip it; chat works without it.
+embedding_model = None
+collection = None
+if os.getenv("ENABLE_RAG", "true").lower() in ("1", "true", "yes"):
+    try:
+        from sentence_transformers import SentenceTransformer
+        import chromadb
+        from chromadb.config import Settings
+        embedding_model = SentenceTransformer('BAAI/bge-base-en-v1.5')
+        client = chromadb.PersistentClient(path=db_path, settings=Settings(allow_reset=True))
+        collection = client.get_collection(name="ds442_hw_sol")
+        logger.info("ChromaDB initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize ChromaDB: {e}")
+        embedding_model = None
+        collection = None
+else:
+    logger.info("ENABLE_RAG is off: homework search (ChromaDB) disabled")
 
 
 async def query_homework(query_text: str) -> Optional[List[Dict[str, str]]]:

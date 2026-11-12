@@ -273,6 +273,11 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
   };
 
   const question = metadata?.is_assignment_chat ? metadata?.assignment_question : null;
+  // Start each part "(b)", "(c)" … on its own line so long multi-part questions scan easily.
+  // (Only outside $math$, so "(a)" inside a formula is left alone.)
+  const splitParts = (text) => (text || '').split(/(\$\$[\s\S]*?\$\$|\$[^$]*\$)/).map((chunk, i) =>
+    i % 2 ? chunk : chunk.replace(/\s+\(([b-z])\)\s+/g, '\n\n($1) ')
+  ).join('');
   // The tutor's latest finished reply: its symbols are suggested in the answer box.
   const lastTutorText = [...messages].reverse().find(m => m.role === 'assistant' && !m.isStreaming)?.content || '';
 
@@ -299,7 +304,7 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
               rehypePlugins={[rehypeMathjax]}
               components={{ img: MarkdownImage }}
             >
-              {preprocessLatex(question.text)}
+              {preprocessLatex(splitParts(question.text))}
             </ReactMarkdown>
           </div>
           {question.figures?.length > 0 && (
@@ -308,7 +313,7 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
               onClick={(e) => { if (e.target.tagName === 'IMG') setZoomSrc(e.target.src); }}
               title="Click a figure to enlarge"
             >
-              <QuestionFigures figures={question.figures} />
+              <QuestionFigures figures={question.figures} questionText={question.text} />
             </div>
           )}
         </div>

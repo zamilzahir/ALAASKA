@@ -80,13 +80,11 @@ def create_assignment_system_prompt(question_number: str, question_text: str, hi
         + (f"\n\nThe question includes figures the student can see. Text versions for you (do not paste these to the student):{figures_text}" if figures_text else "")
     )
     
-    assistant_content = f"""Hi! I'm here to help you work through this assignment question:
-
-**Question {question_number}:** {question_text}
-
-Before we dive in, I'd like to understand your initial thoughts. What's your first impression of this question? What concepts or ideas come to mind when you read it?
-
-Take your time - there's no rush. Let's work through this together! 🎯"""
+    # The question (and its figures) is shown next to the chat, so the greeting doesn't repeat it.
+    assistant_content = (
+        f"Hi! Let's work through **Question {question_number}** together (it's shown on the left).\n\n"
+        "What's your first impression? Which ideas or definitions do you think it needs?"
+    )
     
     return [
         create_message("system", system_content),

@@ -234,7 +234,7 @@ export default function AssignmentDetail({
                     <MarkdownContent>
                       {q.prompt_md || q.question_text || 'No question text available'}
                     </MarkdownContent>
-                    <QuestionFigures figures={q.figures} />
+                    <QuestionFigures figures={q.figures} questionText={q.prompt_md || q.question_text} />
                   </div>
                   
                   {q.hints && q.hints.length > 0 && q.hints.some(hint => hint && hint.trim()) && (
