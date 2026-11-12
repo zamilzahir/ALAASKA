@@ -1,0 +1,126 @@
+/* Writing pad (handwriting -> LaTeX) */
+/* Opens as a popup over the page, so the answer box underneath stays visible. */
+.writing-pad-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(44, 62, 80, 0.45);
+}
+.writing-pad {
+  width: min(900px, 92vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  margin: 0;
+  padding: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #20b2aa;
+  border-radius: 8px;
+}
+.writing-pad-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.writing-pad-title { font-weight: 600; color: #147a75; }
+.writing-pad-hint { flex: 1; font-size: 0.85rem; color: #666; }
+.writing-pad-canvas {
+  display: block;
+  width: 100%;
+  height: 240px;
+  background: #fff;
+  border: 1px dashed #8fd9d3;
+  border-radius: 6px;
+  cursor: crosshair;
+  touch-action: none; /* let a stylus/finger draw instead of scrolling */
+}
+.writing-pad-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; }
+
+/* ALAASKA's global button style is teal with white text; override for the pad. */
+.writing-pad button.writing-pad-btn {
+  min-height: 0;
+  min-width: 0;
+  padding: 0.4rem 0.9rem;
+  background: #fff;
+  color: #2c3e50;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+.writing-pad button.writing-pad-btn:hover { background: #e6f7f5; }
+.writing-pad button.writing-pad-btn.primary { background: #20b2aa; color: #fff; border-color: #20b2aa; }
+.writing-pad button.writing-pad-btn.primary:hover { background: #1a9b94; }
+.writing-pad button.writing-pad-btn:disabled { opacity: 0.5; cursor: default; }
+.writing-pad button.writing-pad-close {
+  min-height: 0; min-width: 0; padding: 0 0.5rem;
+  background: none; color: #666; font-size: 1.3rem;
+}
+.writing-pad button.writing-pad-close:hover { background: none; color: #e74c3c; }
+
+.writing-pad-error { margin-top: 0.5rem; color: #c0392b; font-size: 0.9rem; }
+.writing-pad-result { margin-top: 0.75rem; }
+.writing-pad-result label { display: block; font-size: 0.85rem; font-weight: 600; color: #2c3e50; margin-bottom: 0.25rem; }
+.writing-pad-result textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+.writing-pad-preview {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+}
+
+/* Toggle button in the LaTeX toolbar */
+.latex-toolbar button.writing-pad-toggle {
+  min-height: 0;
+  padding: 0.35rem 0.8rem;
+  background: #fff;
+  color: #147a75;
+  border: 1px solid #20b2aa;
+  border-radius: 6px;
+}
+.latex-toolbar button.writing-pad-toggle.active,
+.latex-toolbar button.writing-pad-toggle:hover { background: #20b2aa; color: #fff; }
+
+/* "Fill questions from homework" in the template form */
+.symbol-picker button.autofill-button {
+  min-height: 0;
+  padding: 0.6rem 1rem;
+  background: #fff;
+  color: #147a75;
+  border: 1px solid #20b2aa;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.symbol-picker button.autofill-button:hover { background: #20b2aa; color: #fff; }
+.symbol-picker button.autofill-button:disabled { opacity: 0.6; }
+.symbol-picker-subtitle { margin: 1rem 0 0; color: #147a75; }
+
+/* Question figures (graphs/tables from the homework PDF) */
+.question-figures { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0.75rem 0; }
+.question-figure {
+  margin: 0;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  max-width: 100%;
+}
+.question-figure img { display: block; max-width: 100%; max-height: 360px; }
+.question-figure figcaption { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; font-size: 0.8rem; color: #666; }
+.question-figure button.figure-remove {
+  min-height: 0; min-width: 0; padding: 0.15rem 0.5rem;
+  background: #fff; color: #c0392b; border: 1px solid #e0b4ae; border-radius: 4px; font-size: 0.75rem;
+}
+.question-figure button.figure-remove:hover { background: #fdecea; }
+.figure-description summary { cursor: pointer; font-size: 0.8rem; color: #147a75; margin-top: 0.3rem; }
+.figure-description pre { white-space: pre-wrap; font-size: 0.8rem; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin: 0.3rem 0 0; }
+
+/* "Upload file" button error next to the toolbar */
+.upload-error { color: #c0392b; font-size: 0.85rem; margin: 0 0.5rem; }
+.latex-toolbar button.writing-pad-toggle:disabled { opacity: 0.6; cursor: default; }

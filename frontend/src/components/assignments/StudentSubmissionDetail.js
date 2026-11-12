@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import ReactMarkdown from 'react-markdown';
+import MarkdownImage from '../MarkdownImage';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeMathjax from 'rehype-mathjax';
@@ -44,6 +45,7 @@ export default function StudentSubmissionDetail({ assignmentId, studentEmail, on
       remarkPlugins={[remarkGfm, remarkMath]}
       rehypePlugins={[rehypeMathjax]}
       components={{
+        img: MarkdownImage,
         code({ node, inline, className, children, ...props }) {
           return inline ? (
             <code className={className} {...props}>{children}</code>

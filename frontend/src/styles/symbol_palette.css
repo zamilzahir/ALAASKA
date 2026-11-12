@@ -34,3 +34,88 @@
   background: #20b2aa;
   color: #ffffff;
 }
+
+/* "All symbols" toggle and the full, grouped library under the suggested row */
+.symbol-palette button.symbol-palette-more {
+  min-height: 0;
+  min-width: 0;
+  width: auto;
+  margin: 0 0 0 auto;
+  padding: 0.35rem 0.8rem;
+  background: #ffffff;
+  color: #147a75;
+  border: 1px solid #20b2aa;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.symbol-palette button.symbol-palette-more:hover,
+.symbol-palette button.symbol-palette-more.active { background: #20b2aa; color: #ffffff; }
+
+.symbol-palette-all {
+  position: fixed;          /* floats above the symbol row; the editor below never moves */
+  z-index: 1000;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 0.5rem 1rem 0.75rem;
+  background: #f4fbfa;
+  border: 2px solid #20b2aa;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.15);
+}
+.symbol-palette-all-head {
+  position: sticky;
+  top: -0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: -0.5rem -1rem 0.4rem;
+  padding: 0.5rem 1rem;
+  background: #f4fbfa;
+  z-index: 1;
+}
+.symbol-palette-hint { font-size: 0.8rem; color: #6b757d; }
+.symbol-palette-search {
+  width: 100%;
+  max-width: 360px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #b8dcd8;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.symbol-palette-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+.symbol-palette-group-name {
+  width: 150px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5b6670;
+}
+.symbol-palette-all button.symbol-palette-key {
+  min-height: 0;
+  width: auto;
+  margin: 0;
+}
+.symbol-palette-all button.symbol-palette-key.suggested { border-width: 2px; background: #e6f7f5; }
+.symbol-palette-empty { font-size: 0.85rem; color: #6b757d; }
+
+/* "Browse all" link at the bottom of the small panel */
+.symbol-palette-browse { min-width: 0; min-height: 0; margin: 6px 0 2px; padding: 6px 10px; border: 1px dashed #b9dcda; background: #fff; color: #138f89; border-radius: 8px; cursor: pointer; font-size: 0.85rem; align-self: flex-start; }
+.symbol-palette-browse:hover { background: #eef8f7; }
+
+/* setting at the bottom of the panel */
+.symbol-palette-footer { border-top: 1px solid #dceeed; margin-top: 8px; padding: 6px 0 2px; }
+.symbol-palette-setting { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8rem; color: #456; cursor: pointer; }
+.symbol-palette-setting input { margin: 0; }
+.symbol-palette-setting code { background: #eef4f4; padding: 0 4px; border-radius: 3px; }
+.symbol-palette-setting-note { color: #8a9a9a; font-size: 0.74rem; }
+.symbol-palette-plain { min-width: 0; min-height: 0; margin-left: auto; padding: 2px 8px; border: none; background: none; color: #138f89; text-decoration: underline; font-size: 0.78rem; cursor: pointer; }

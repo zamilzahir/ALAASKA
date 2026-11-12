@@ -8,6 +8,7 @@ from backend.db_mongo import initialize_database, close_connection
 from backend.db_assignments import create_assignment_indexes
 from backend.routes_chat import router as chat_router
 from backend.routes_assignments import router as assignments_router
+from backend.routes_symbols import router as symbols_router
 from backend.routes_admin import router as admin_router  # Make sure this is imported
 from backend.routes_telemetry import router as telemetry_router  # ML telemetry data
 
@@ -59,6 +60,7 @@ app.middleware("http")(limit_request_size)
 # Include routers - MAKE SURE admin_router is included
 app.include_router(chat_router, tags=["chat"])
 app.include_router(assignments_router, tags=["assignments"])
+app.include_router(symbols_router, tags=["symbols"])
 app.include_router(admin_router, tags=["admin"])  # This line must be present
 app.include_router(telemetry_router, tags=["telemetry"])  # ML behavioral analysis
 

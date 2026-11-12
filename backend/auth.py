@@ -130,8 +130,33 @@ async def get_userinfo_from_token(payload: dict) -> dict:
     
     return user_info
 
+# Cache /userinfo answers per token so one login = one Auth0 call (avoids 429 rate limits).
+_USERINFO_CACHE: dict = {}
+_USERINFO_TTL = 3600  # seconds
+_USERINFO_LOCKS: dict = {}
+
+
 async def get_userinfo_from_api(access_token: str) -> dict:
-    """Fetch user information from Auth0 API (fallback only)"""
+    """Fetch user information from Auth0 API (fallback only), cached per token."""
+    import asyncio, time
+    cached = _USERINFO_CACHE.get(access_token)
+    if cached and time.time() - cached[0] < _USERINFO_TTL:
+        return cached[1]
+    lock = _USERINFO_LOCKS.setdefault(access_token, asyncio.Lock())
+    async with lock:  # many requests at once (page load) share a single Auth0 call
+        cached = _USERINFO_CACHE.get(access_token)
+        if cached and time.time() - cached[0] < _USERINFO_TTL:
+            return cached[1]
+        info = await _fetch_userinfo(access_token)
+        if len(_USERINFO_CACHE) > 5000:
+            _USERINFO_CACHE.clear()
+            _USERINFO_LOCKS.clear()
+        _USERINFO_CACHE[access_token] = (time.time(), info)
+        return info
+
+
+async def _fetch_userinfo(access_token: str) -> dict:
+    """Fetch user information from Auth0 API"""
     userinfo_url = f"https://{AUTH0_DOMAIN}/userinfo"
     logger.info(f"[AUTH] Fetching user info from API: {userinfo_url}")
     logger.debug(f"[AUTH] Using token (first 20 chars): {access_token[:20]}...")

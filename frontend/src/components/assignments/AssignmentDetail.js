@@ -5,6 +5,8 @@ import remarkMath from 'remark-math';
 import rehypeMathjax from 'rehype-mathjax';
 import api from '../../api/axios';
 import QuizModal from './QuizModal';
+import QuestionFigures from '../QuestionFigures';
+import MarkdownImage from '../MarkdownImage';
 
 export default function AssignmentDetail({ 
   assignment, 
@@ -101,6 +103,7 @@ export default function AssignmentDetail({
       remarkPlugins={[remarkGfm, remarkMath]}
       rehypePlugins={[rehypeMathjax]}
       components={{
+        img: MarkdownImage,
         code({node, inline, className, children, ...props}) {
           return inline ? (
             <code className="inline-code" {...props}>
@@ -231,6 +234,7 @@ export default function AssignmentDetail({
                     <MarkdownContent>
                       {q.prompt_md || q.question_text || 'No question text available'}
                     </MarkdownContent>
+                    <QuestionFigures figures={q.figures} />
                   </div>
                   
                   {q.hints && q.hints.length > 0 && q.hints.some(hint => hint && hint.trim()) && (
@@ -342,4 +346,4 @@ export default function AssignmentDetail({
       )}
     </>
   );
-}
+}

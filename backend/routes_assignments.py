@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import get_current_user, http_bearer
 from fastapi.security import HTTPAuthorizationCredentials
 from backend.admin import require_admin, require_grader
+from backend.figure_extract import figures_as_text
+from backend.symbol_extract import suggest_from_text
 from backend.models_assignments import (
     CreateTemplateRequest, 
     CreateAssignmentRequest, 
@@ -49,7 +51,7 @@ def create_message(role: str, content: str) -> dict:
         "word_count": len(content.split()) if content else 0
     }
 
-def create_assignment_system_prompt(question_number: str, question_text: str, hints: list = None) -> list:
+def create_assignment_system_prompt(question_number: str, question_text: str, hints: list = None, figures_text: str = "") -> list:
     """
     Create initial messages for an assignment question chat.
     
@@ -75,6 +77,7 @@ def create_assignment_system_prompt(question_number: str, question_text: str, hi
         "Discuss only academic topics."
         "If hints are given, use them to guide the student toward the critical point."
         f"\n\nThe student needs to solve this assignment question:\n\nQuestion {question_number}: {question_text}{hints_text}"
+        + (f"\n\nThe question includes figures the student can see. Text versions for you (do not paste these to the student):{figures_text}" if figures_text else "")
     )
     
     assistant_content = f"""Hi! I'm here to help you work through this assignment question:
@@ -133,10 +136,12 @@ async def create_assignment_template(
                 "number": q.number,
                 "prompt_md": q.prompt_md,
                 "marks": float(q.marks),
-                "hints": q.hints or []
+                "hints": q.hints or [],
+                "figures": q.figures or []
             }
             for q in request.questions
         ],
+        "symbols": request.symbols,
         "created_by": user["email"],
         "created_at": datetime.now(timezone.utc)
     }
@@ -188,6 +193,7 @@ async def create_assignment(
         "title": template["title"],
         "description": template["description"],
         "questions": template["questions"],
+        "symbols": template.get("symbols", []),
         "allowed_students": [email.lower() for email in request.allowed_students],
         "pre_quiz_id": request.pre_quiz_id,  
         "post_quiz_id": request.post_quiz_id,
@@ -484,7 +490,8 @@ async def accept_assignment(assignment_id: str, auth: HTTPAuthorizationCredentia
         initial_messages = create_assignment_system_prompt(
             question_number=question_number,
             question_text=question_text,
-            hints=q.get("hints", [])
+            hints=q.get("hints", []),
+            figures_text=figures_as_text(q.get("figures"))
         )
         
         conversation_doc = {
@@ -508,6 +515,7 @@ async def accept_assignment(assignment_id: str, auth: HTTPAuthorizationCredentia
             "prompt_md": question_text,
             "marks": question_marks,
             "hints": q.get("hints", []),
+            "figures": q.get("figures", []),
             "chat_id": chat_id,
             "old_chats": [],
             "student_solution": None,
@@ -574,7 +582,13 @@ async def get_assignment_details(assignment_id: str, auth: HTTPAuthorizationCred
         "assignment_id": assignment_id,
         "title": assignment["title"],
         "description": assignment["description"],
-        "questions": student_assignment["questions"],
+        "symbols": assignment.get("symbols", []),
+        # Each question also gets the symbols found in its own text (computed here, not stored),
+        # so the student's symbol row can show what THIS question uses first.
+        "questions": [
+            {**q, "symbols": suggest_from_text(q.get("prompt_md") or q.get("question_text") or "")[:8]}
+            for q in student_assignment["questions"]
+        ],
         "accepted_at": student_assignment["accepted_at"].isoformat(),
         "has_pre_quiz": assignment.get("pre_quiz_id") is not None,
         "has_post_quiz": assignment.get("post_quiz_id") is not None,
@@ -679,7 +693,8 @@ async def get_question_chat(
     initial_messages = create_assignment_system_prompt(
         question_number=question_number,
         question_text=question_text,
-        hints=target_question.get("hints", [])
+        hints=target_question.get("hints", []),
+        figures_text=figures_as_text(target_question.get("figures"))
     )
     
     # Get assignment for summary
@@ -947,10 +962,12 @@ async def update_assignment_template(
                 "number": q.number,
                 "prompt_md": q.prompt_md,
                 "marks": float(q.marks),
-                "hints": q.hints or []
+                "hints": q.hints or [],
+                "figures": q.figures or []
             }
             for q in request.questions
         ],
+        "symbols": request.symbols,
         "updated_by": user["email"],
         "updated_at": datetime.now(timezone.utc)
     }

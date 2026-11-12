@@ -6,7 +6,9 @@ import remarkMath from 'remark-math';
 import rehypeMathjax from 'rehype-mathjax';
 import api from '../api/axios';
 import LatexEditor from './LatexEditor';
-import { PRESETS, symbolsFromIds } from '../symbols';
+import MarkdownImage from './MarkdownImage';
+import QuestionFigures from './QuestionFigures';
+import { symbolsFromIds } from '../symbols';
 import '../styles/assignment_chat.css';
 import {
   initTelemetry,
@@ -24,6 +26,8 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
   const [activeMenu, setActiveMenu] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [useLatexEditor, setUseLatexEditor] = useState(false);
+  const [questionOpen, setQuestionOpen] = useState(true);
+  const [zoomSrc, setZoomSrc] = useState(null);
   const messagesEndRef = useRef(null);
   const menuButtonRefs = useRef({});
 
@@ -66,6 +70,18 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Assignment chats open with the answer composer (symbols, formula, draw, attach).
+  useEffect(() => {
+    if (metadata?.is_assignment_chat) setUseLatexEditor(true);
+  }, [metadata?.is_assignment_chat]);
+
+  useEffect(() => {
+    if (!zoomSrc) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setZoomSrc(null); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [zoomSrc]);
+
   const loadChatMetadata = async () => {
     try {
       const res = await api.get(`/conversation/${chatId}`);
@@ -76,14 +92,23 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
         try {
           const assignmentRes = await api.get(`/assignments/${meta.assignment_id}`);
           // Symbols the professor chose for this assignment (a list of ids from symbols.js).
-          // TEMPORARY: until the professor's picker saves them, fall back to the Discrete Math preset.
-          const symbolIds = assignmentRes.data.symbols?.length
-            ? assignmentRes.data.symbols
-            : PRESETS['Discrete Math (CMPSC 360)'];
+          const symbolIds = assignmentRes.data.symbols || [];
+          // The question this chat is about, shown in the side panel next to the chat.
+          const q = (assignmentRes.data.questions || []).find(x =>
+            (meta.question_id && x.question_id === meta.question_id) ||
+            (meta.question_number != null && String(x.number) === String(meta.question_number))
+          );
           setMetadata(prev => ({
             ...prev,
             assignment_title: assignmentRes.data.title,
-            assignment_symbols: symbolsFromIds(symbolIds)
+            assignment_symbols: symbolsFromIds(symbolIds),
+            assignment_question: q ? {
+              number: q.number,
+              text: q.prompt_md || q.question_text || '',
+              marks: q.marks,
+              figures: q.figures || [],
+              symbols: symbolsFromIds(q.symbols || [])   // symbols found in this question's text
+            } : null
           }));
         } catch (err) {
           console.error('Failed to load assignment title:', err);
@@ -247,8 +272,54 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
     );
   };
 
+  const question = metadata?.is_assignment_chat ? metadata?.assignment_question : null;
+  // The tutor's latest finished reply: its symbols are suggested in the answer box.
+  const lastTutorText = [...messages].reverse().find(m => m.role === 'assistant' && !m.isStreaming)?.content || '';
+
+  // Left column: the question (text + figures), always visible while the student works.
+  const renderQuestionPanel = () => (
+    <aside className={`question-panel ${questionOpen ? '' : 'collapsed'}`} aria-label="Question">
+      <button
+        type="button"
+        className="question-panel-toggle"
+        onClick={() => setQuestionOpen(!questionOpen)}
+        title={questionOpen ? 'Hide question' : 'Show question'}
+      >
+        {questionOpen ? '◂ Hide' : `▸ Q${question.number}`}
+      </button>
+      {questionOpen && (
+        <div className="question-panel-body">
+          <div className="question-panel-head">
+            Question {question.number}
+            {question.marks ? <span className="question-panel-marks">{question.marks} pts</span> : null}
+          </div>
+          <div className="question-panel-text">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, remarkMath]}
+              rehypePlugins={[rehypeMathjax]}
+              components={{ img: MarkdownImage }}
+            >
+              {preprocessLatex(question.text)}
+            </ReactMarkdown>
+          </div>
+          {question.figures?.length > 0 && (
+            <div
+              className="question-panel-figures"
+              onClick={(e) => { if (e.target.tagName === 'IMG') setZoomSrc(e.target.src); }}
+              title="Click a figure to enlarge"
+            >
+              <QuestionFigures figures={question.figures} />
+            </div>
+          )}
+        </div>
+      )}
+    </aside>
+  );
+
   return (
     <div className="main">
+      <div className={`workspace ${question ? 'has-question' : ''}`}>
+      {question && renderQuestionPanel()}
       <div className="chatbox">
         {metadata?.is_assignment_chat && (
           <div 
@@ -320,6 +391,7 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
                             remarkPlugins={[remarkGfm, remarkMath]}
                             rehypePlugins={[rehypeMathjax]}
                             components={{
+                              img: MarkdownImage,
                               p: ({node, children, ...props}) => (
                                 <p style={{ margin: '0.5rem 0', lineHeight: '1.6' }} {...props}>
                                   {children}
@@ -428,25 +500,12 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
                 onSubmit={handleSendWithTelemetry}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
-                placeholder="Type your answer using Markdown and LaTeX..."
+                placeholder="Write your answer…"
                 suggestedSymbols={metadata?.is_assignment_chat ? metadata?.assignment_symbols : null}
+                questionSymbols={metadata?.is_assignment_chat ? metadata?.assignment_question?.symbols : null}
+                tutorText={lastTutorText}
+                onSwitchToSimple={() => setUseLatexEditor(false)}
               />
-              <div className="latex-submit-bar">
-                <button 
-                  onClick={() => setUseLatexEditor(false)}
-                  className="latex-toggle-button-left"
-                  title="Switch to Simple Editor"
-                >
-                  📝
-                </button>
-                <button 
-                  onClick={handleSendWithTelemetry}
-                  className="latex-send-button"
-                  disabled={!input.trim()}
-                >
-                  Send Message (Ctrl+Enter)
-                </button>
-              </div>
             </div>
           ) : (
             <div className="input-container-with-toggle">
@@ -478,6 +537,14 @@ export default function ChatInterface({ chatId, messages, input, setInput, sendM
           )}
         </div>
       </div>
+      </div>
+      {zoomSrc && ReactDOM.createPortal(
+        <div className="figure-lightbox" onClick={() => setZoomSrc(null)} role="dialog" aria-label="Figure">
+          <img src={zoomSrc} alt="Question figure, enlarged" />
+          <span className="figure-lightbox-hint">Click anywhere or press Esc to close</span>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

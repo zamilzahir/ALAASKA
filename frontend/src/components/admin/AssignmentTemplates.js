@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import api from '../../api/axios';
+import SymbolPicker from './SymbolPicker';
+import MathAutocompleteTextarea from '../MathAutocompleteTextarea';
+import QuestionFigures from '../QuestionFigures';
 
 export default function AssignmentTemplates({ templates, loading, onUpdate, showNotification }) {
   const [busy, setBusy] = useState(false);
@@ -8,13 +11,15 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
   const [templateForm, setTemplateForm] = useState({
     title: '',
     description: '',
-    questions: [{ number: '', prompt_md: '', marks: 1, hints: [] }]
+    questions: [{ number: '', prompt_md: '', marks: 1, hints: [] }],
+    symbols: []
   });
 
   const [editTemplateForm, setEditTemplateForm] = useState({
     title: '',
     description: '',
-    questions: []
+    questions: [],
+    symbols: []
   });
 
   const addQuestion = () => {
@@ -51,6 +56,27 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
     const newQuestions = [...templateForm.questions];
     newQuestions[questionIndex].hints[hintIndex] = value;
     setTemplateForm({ ...templateForm, questions: newQuestions });
+  };
+
+  // Replace the form's questions with ones read from the homework PDF.
+  // Returns false if the professor chose to keep their existing questions.
+  const applyExtractedQuestions = (form, setForm, keepIds) => (questions) => {
+    const hasText = form.questions.some(q => q.prompt_md && q.prompt_md.trim());
+    if (hasText && !window.confirm('Replace the current questions with the ones from the PDF?')) {
+      return false;
+    }
+    setForm(prev => ({
+      ...prev,
+      questions: questions.map(q => ({
+        ...(keepIds ? { question_id: '' } : {}),
+        number: String(q.number),
+        prompt_md: q.prompt_md,
+        marks: q.marks || 1,
+        hints: [],
+        figures: q.figures || []
+      }))
+    }));
+    return true;
   };
 
   const validateTemplate = (form) => {
@@ -98,8 +124,10 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
           number: q.number.trim(),
           prompt_md: q.prompt_md,
           marks: parseFloat(q.marks),
-          hints: q.hints.filter(h => h && h.trim() !== '')
-        }))
+          hints: q.hints.filter(h => h && h.trim() !== ''),
+          figures: q.figures || []
+        })),
+        symbols: templateForm.symbols
       };
 
       await api.post('/assignment-templates', payload);
@@ -107,7 +135,8 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
       setTemplateForm({
         title: '',
         description: '',
-        questions: [{ number: '', prompt_md: '', marks: 1, hints: [] }]
+        questions: [{ number: '', prompt_md: '', marks: 1, hints: [] }],
+        symbols: []
       });
       onUpdate();
     } catch (err) {
@@ -128,8 +157,10 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
         number: q.number,
         prompt_md: q.prompt_md,
         marks: q.marks,
-        hints: q.hints || []
-      }))
+        hints: q.hints || [],
+        figures: q.figures || []
+      })),
+      symbols: template.symbols || []
     });
   };
 
@@ -138,7 +169,8 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
     setEditTemplateForm({
       title: '',
       description: '',
-      questions: []
+      questions: [],
+      symbols: []
     });
   };
 
@@ -159,8 +191,10 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
           number: q.number.trim(),
           prompt_md: q.prompt_md,
           marks: parseFloat(q.marks),
-          hints: q.hints.filter(h => h && h.trim() !== '')
-        }))
+          hints: q.hints.filter(h => h && h.trim() !== ''),
+          figures: q.figures || []
+        })),
+        symbols: editTemplateForm.symbols
       };
 
       await api.put(`/assignment-templates/${editingTemplate}`, payload);
@@ -256,6 +290,13 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
           rows="3"
         />
 
+        <SymbolPicker
+          value={templateForm.symbols}
+          onChange={(ids) => setTemplateForm(prev => ({ ...prev, symbols: ids }))}
+          questionText={templateForm.questions.map(q => q.prompt_md).join('\n')}
+          onQuestions={applyExtractedQuestions(templateForm, setTemplateForm, false)}
+        />
+
         <h3>Questions</h3>
         {templateForm.questions.map((question, qIdx) => (
           <div key={qIdx} className="question-form">
@@ -293,12 +334,17 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
             
             <div style={{ marginBottom: '8px' }}>
               <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>Question Text</label>
-              <textarea
+              <MathAutocompleteTextarea
                 placeholder="Question text (Markdown supported)"
                 value={question.prompt_md}
-                onChange={(e) => updateQuestion(qIdx, 'prompt_md', e.target.value)}
-                className="admin-textarea"
+                onChange={(text) => updateQuestion(qIdx, 'prompt_md', text)}
+                preferredIds={templateForm.symbols}
                 rows="3"
+              />
+              <QuestionFigures
+                figures={question.figures}
+                showDescriptions
+                onRemove={(fIdx) => updateQuestion(qIdx, 'figures', question.figures.filter((_, i) => i !== fIdx))}
               />
             </div>
 
@@ -358,6 +404,13 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
                   style={{ marginBottom: '1rem' }}
                 />
 
+                <SymbolPicker
+                  value={editTemplateForm.symbols}
+                  onChange={(ids) => setEditTemplateForm(prev => ({ ...prev, symbols: ids }))}
+                  questionText={editTemplateForm.questions.map(q => q.prompt_md).join('\n')}
+                  onQuestions={applyExtractedQuestions(editTemplateForm, setEditTemplateForm, true)}
+                />
+
                 <h4 style={{ marginBottom: '0.5rem' }}>Questions</h4>
                 {editTemplateForm.questions.map((question, qIdx) => (
                   <div key={qIdx} className="question-form" style={{ marginBottom: '1rem' }}>
@@ -390,13 +443,17 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
                       style={{ marginBottom: '0.5rem' }}
                     />
                     
-                    <textarea
+                    <MathAutocompleteTextarea
                       placeholder="Question text (Markdown supported)"
                       value={question.prompt_md}
-                      onChange={(e) => updateEditTemplateQuestion(qIdx, 'prompt_md', e.target.value)}
-                      className="admin-textarea"
+                      onChange={(text) => updateEditTemplateQuestion(qIdx, 'prompt_md', text)}
+                      preferredIds={editTemplateForm.symbols}
                       rows="2"
-                      style={{ marginBottom: '0.5rem' }}
+                    />
+                    <QuestionFigures
+                      figures={question.figures}
+                      showDescriptions
+                      onRemove={(fIdx) => updateEditTemplateQuestion(qIdx, 'figures', question.figures.filter((_, i) => i !== fIdx))}
                     />
 
                     <div className="hints-section">
@@ -449,7 +506,10 @@ export default function AssignmentTemplates({ templates, loading, onUpdate, show
                 <div>
                   <h4>{template.title}</h4>
                   <p>{template.description}</p>
-                  <span className="template-meta">{template.questions?.length || 0} questions</span>
+                  <span className="template-meta">
+                    {template.questions?.length || 0} questions
+                    {template.symbols?.length ? ` · ${template.symbols.length} symbols` : ''}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                   <button

@@ -9,6 +9,7 @@ class Question(BaseModel):
     prompt_md: str = Field(..., description="Markdown for the question body")
     marks: float = Field(default=0, ge=0, description="Marks allotted for the question")
     hints: Optional[List[str]] = []
+    figures: Optional[List[dict]] = []  # [{figure_id, kind, description}] images from the homework PDF
     
     # Chat tracking
     chat_id: Optional[str] = None  # Current active chat
@@ -78,11 +79,13 @@ class CreateTemplateRequest(BaseModel):
     title: str
     description: str
     questions: List[Question]
+    symbols: List[str] = []  # palette symbol ids chosen by the instructor (see frontend/src/symbols.js)
 
 class UpdateTemplateRequest(BaseModel):
     title: str
     description: str
     questions: List[Question]
+    symbols: List[str] = []  # palette symbol ids chosen by the instructor (see frontend/src/symbols.js)
 
 class CreateAssignmentRequest(BaseModel):
     template_id: str

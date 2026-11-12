@@ -520,3 +520,28 @@
     font-size: 1.3rem;
   }
 }
+
+/* ===== Workspace: question panel | chat ===== */
+.workspace { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+.workspace > .chatbox { flex: 1; min-width: 0; }
+.question-panel { width: 34%; max-width: 460px; min-width: 260px; border-right: 1px solid #e3eeee; background: #fafdfd; display: flex; flex-direction: column; min-height: 0; position: relative; }
+.question-panel.collapsed { width: auto; min-width: 0; }
+.question-panel-toggle { min-width: 0; min-height: 0; align-self: flex-end; margin: 8px 8px 0; border: 1px solid #cfe7e6; background: #fff; color: #138f89; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.82rem; white-space: nowrap; }
+.question-panel.collapsed .question-panel-toggle { align-self: center; }
+.question-panel-body { overflow-y: auto; padding: 4px 16px 16px; }
+.question-panel-head { font-weight: 700; color: #134; font-size: 1.05rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.question-panel-marks { font-size: 0.75rem; font-weight: 600; background: #e0f4f3; color: #138f89; padding: 2px 8px; border-radius: 10px; }
+.question-panel-text { line-height: 1.55; font-size: 0.95rem; overflow-wrap: anywhere; }
+.question-panel-text mjx-container[display="true"] { overflow-x: auto; overflow-y: hidden; }
+.question-panel-figures img { cursor: zoom-in; max-width: 100%; }
+.figure-lightbox { position: fixed; inset: 0; background: rgba(10, 20, 25, 0.82); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: zoom-out; padding: 16px; }
+.figure-lightbox img { max-width: 95vw; max-height: 85vh; background: #fff; border-radius: 6px; }
+.figure-lightbox-hint { color: #dde; font-size: 0.85rem; }
+@media (max-width: 900px) {
+  .workspace.has-question { flex-direction: column; }
+  .question-panel { width: auto; max-width: none; min-width: 0; max-height: 38vh; border-right: none; border-bottom: 1px solid #e3eeee; }
+  .question-panel.collapsed { max-height: none; }
+  .question-panel-toggle { align-self: flex-start; }
+}
+/* The composer sizes itself to its content (no fixed 500px block). */
+.latex-editor-container { height: auto !important; overflow: visible; }

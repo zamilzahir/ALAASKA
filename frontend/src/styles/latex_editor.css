@@ -320,3 +320,111 @@
     max-height: 200px;
   }
 }
+
+/* ===== Composer: one answer box + one slim toolbar ===== */
+.latex-editor.composer { height: auto; overflow: visible; border: 1px solid #cfe3e2; border-radius: 14px; margin: 8px 12px 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.latex-editor.composer:focus-within { border-color: #20b2aa; }
+.composer-input { flex: none; min-height: 52px; max-height: 200px; overflow-y: auto; padding: 12px 14px 6px; font-family: inherit; font-size: 1rem; line-height: 1.5; background: #fff; border-radius: 14px 14px 0 0; }
+
+.composer-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 8px 10px; }
+.composer-toolbar-left, .composer-toolbar-right { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.composer-toolbar-left { flex-wrap: wrap; }
+
+/* compact symbol row: no background band, round chips */
+.composer .symbol-palette.compact { background: none; border: none; padding: 0; gap: 6px; flex-wrap: wrap; }
+.composer .symbol-palette.compact .symbol-palette-key,
+.composer-chip { min-width: 34px; min-height: 0; height: 32px; padding: 0 10px; border-radius: 16px; border: 1px solid #d5e4e3; background: #fff; color: #234; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.composer .symbol-palette.compact .symbol-palette-key:hover,
+.composer-chip:hover { background: #eef8f7; border-color: #20b2aa; }
+.composer .symbol-palette.compact .symbol-palette-more { min-width: 0; min-height: 0; height: 32px; padding: 0 12px; border-radius: 16px; font-size: 0.85rem; }
+.composer-chip { font-size: 0.85rem; color: #138f89; }
+.composer-chip.active { background: #e0f4f3; border-color: #20b2aa; }
+
+.composer-icon { min-width: 0; min-height: 0; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: none; background: transparent; color: #456; font-size: 1.05rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.composer-icon:hover, .composer-icon.active { background: #eef3f3; }
+.composer-send { min-width: 0; min-height: 0; width: 36px; height: 36px; padding: 0; border-radius: 50%; border: none; background: #20b2aa; color: #fff; font-size: 1rem; cursor: pointer; }
+.composer-send:hover { background: #179a93; }
+.composer-send:disabled { background: #c9d6d5; cursor: default; }
+
+/* formula box (only when needed) */
+.composer-formula { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; margin: 0 10px 4px; padding: 8px; border: 1px solid #cfe7e6; background: #f8fcfc; border-radius: 10px; }
+.composer-formula .math-input { flex: 1 1 260px; }
+.composer-formula-close { min-width: 0; min-height: 0; width: 32px; border: none; background: transparent; color: #678; cursor: pointer; border-radius: 6px; }
+.composer-formula-close:hover { background: #e9f1f1; }
+.composer-rules { position: relative; }
+.composer-rules-toggle { height: 100%; min-width: 0; min-height: 0; border: 1px solid #cfe7e6; background: #fff; color: #138f89; border-radius: 6px; padding: 0 10px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; }
+.composer-rules-toggle:hover { background: #eef7f7; }
+.composer-rules-menu { position: absolute; right: 0; bottom: calc(100% + 4px); max-height: 240px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.15); padding: 6px; display: flex; flex-direction: column; min-width: 180px; z-index: 1000; }
+.composer-rules-menu button { color: #234; min-width: 0; min-height: 0; text-align: left; border: none; background: none; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+.composer-rules-menu button:hover { background: #eef7f7; }
+.composer-hint { flex-basis: 100%; font-size: 0.76rem; color: #667; }
+
+.composer-preview { border-top: 1px dashed #e0e0e0; padding: 4px 14px 8px; max-height: 160px; overflow-y: auto; }
+.composer-preview .latex-preview { padding: 2px 0; }
+.composer-preview-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: #99a; }
+
+/* ===== MathLive box ===== */
+.math-input { flex: 1; display: flex; gap: 6px; min-width: 0; }
+.math-input-field { flex: 1; min-width: 0; font-size: 1.2rem; padding: 4px 8px; border: 1px solid #b9dcda; border-radius: 6px; background: #fff; --caret-color: #138f89; --selection-background-color: #d4efee; }
+.math-input-field:focus-within { outline: 2px solid #20b2aa; outline-offset: 0; }
+.math-input-field::part(menu-toggle) { display: none; }
+.math-input-insert { min-width: 0; min-height: 0; border: none; background: #20b2aa; color: #fff; border-radius: 6px; padding: 0 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.math-input-insert:hover { background: #179a93; }
+
+@media (max-width: 600px) {
+  .latex-editor.composer { margin: 6px 6px 8px; }
+  .composer-toolbar { flex-wrap: wrap; }
+  .composer-toolbar-right { margin-left: auto; }
+}
+
+/* quick-row caption + "\word" autocomplete */
+.composer .symbol-palette-label { font-size: 0.75rem; color: #7a8a8a; margin-right: 2px; white-space: nowrap; }
+.composer-autocomplete { list-style: none; margin: 0 10px 4px; padding: 4px; border: 1px solid #cfe7e6; border-radius: 10px; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+.composer-autocomplete li { display: flex; align-items: center; gap: 10px; padding: 5px 8px; border-radius: 6px; cursor: pointer; }
+.composer-autocomplete li.active { background: #e6f6f5; }
+.composer-ac-label { min-width: 28px; text-align: center; font-size: 1.1rem; }
+.composer-ac-name { color: #345; font-size: 0.88rem; }
+.composer-ac-tag { margin-left: auto; font-size: 0.7rem; color: #138f89; background: #e0f4f3; padding: 1px 6px; border-radius: 8px; }
+li.composer-ac-hint { cursor: default; font-size: 0.72rem; color: #8a9a9a; padding-top: 2px; }
+@media (max-width: 600px) { .composer .symbol-palette-label { display: none; } }
+
+/* ===== Calmer toolbar: neutral chips, one coloured element (Send) ===== */
+.composer .symbol-palette.compact { flex-wrap: nowrap; overflow: hidden; }
+.composer .symbol-palette.compact .symbol-palette-key,
+.composer-chip { border: 1px solid transparent; background: #f1f4f4; color: #2b3a3a; }
+.composer .symbol-palette.compact .symbol-palette-key:hover,
+.composer-chip:hover { background: #e6eeee; border-color: #c9dad9; }
+.composer .symbol-palette.compact .symbol-palette-more { background: transparent; border: none; color: #5d6f6f; font-weight: 500; padding: 0 8px; }
+.composer .symbol-palette.compact .symbol-palette-more:hover,
+.composer .symbol-palette.compact .symbol-palette-more.active { background: #eef3f3; color: #138f89; }
+.composer-formula-btn { font-family: 'Times New Roman', serif; font-size: 1rem; color: #2b3a3a; padding: 0 9px; }
+.composer-formula-btn.active { background: #e0f4f3; border-color: #20b2aa; }
+.composer-toolbar-left { flex-wrap: nowrap; min-width: 0; flex: 1; }
+
+/* ===== Two rows: Suggested / Frequent ===== */
+.composer-toolbar { padding: 4px 8px 4px 12px; }
+.composer-row2 { padding-bottom: 8px; }
+.composer .symbol-palette-label { display: inline-block; width: 70px; flex: none; font-size: 0.78rem; color: #7a8a8a; }
+.composer-row2 .symbol-palette-wrap { flex: 1; min-width: 0; }
+.composer-row2 .symbol-palette.compact { width: 100%; }
+.composer-row2 .symbol-palette.compact .symbol-palette-more { margin-left: auto; border: 1px solid #dbe5e5; background: #fff; color: #2b3a3a; border-radius: 16px; }
+.composer .symbol-palette.compact.plain .symbol-palette-key { background: transparent; min-width: 30px; padding: 0 6px; }
+.composer .symbol-palette.compact.plain .symbol-palette-key:hover { background: #eef3f3; }
+.composer-formula-btn { border: 1px solid #dbe5e5; background: #fff; border-radius: 16px; }
+@media (max-width: 600px) { .composer .symbol-palette-label { display: none; } }
+.composer-formula-btn { font-family: inherit; font-size: 0.85rem; }
+.composer-formula-btn i { font-family: 'Times New Roman', serif; font-size: 1.05rem; margin-right: 4px; }
+
+/* ===== Suggested row slides sideways ===== */
+.composer .symbol-palette.compact { min-width: 0; }
+.composer-toolbar > .symbol-palette-wrap { flex: 1; min-width: 0; }
+.symbol-palette-scroller { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
+.symbol-palette-scroll { display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: none; padding: 2px 0; min-width: 0; flex: 1;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); }
+.symbol-palette-scroll::-webkit-scrollbar { display: none; }
+.symbol-palette-scroll .symbol-palette-key { flex: none; }
+.symbol-palette-nudge { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; min-width: 0; min-height: 0; width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 1px solid #d5e2e2; background: #fff; color: #456; font-size: 1.05rem; line-height: 1; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+.symbol-palette-nudge:hover { background: #eef6f6; color: #138f89; }
+.symbol-palette-nudge.left { left: -4px; }
+.symbol-palette-nudge.right { right: -2px; }

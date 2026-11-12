@@ -248,6 +248,62 @@ async def start_chat(auth: HTTPAuthorizationCredentials = Depends(http_bearer)):
     }
 
 
+# ========== WRITING-PAD DRAWINGS ==========
+import base64 as _b64
+import re as _re
+from backend.db_mongo import db as _db
+
+import os as _os
+_FIGURE_REF = _re.compile(r"!\[[^\]]*\]\(/figures/([0-9a-fA-F-]{36})\)")
+_MAX_IMAGES = 6  # newest drawings only, to keep requests small
+
+
+async def attach_drawings_for_model(messages_for_api: list) -> list:
+    refs = [(i, fid) for i, m in enumerate(messages_for_api) if m["role"] == "user"
+            for fid in _FIGURE_REF.findall(m.get("content") or "")]
+    keep = {fid for _, fid in refs[-_MAX_IMAGES:]}
+    if not keep:
+        return messages_for_api
+    logger.warning(f"[DRAWINGS] looking up {len(keep)} drawing(s)")
+    pngs = {}
+    async for doc in _db["question_figures"].find({"figure_id": {"$in": list(keep)}}, {"figure_id": 1, "png": 1}):
+        pngs[doc["figure_id"]] = _b64.b64encode(bytes(doc["png"])).decode()
+    out = []
+    for m in messages_for_api:
+        ids = [f for f in _FIGURE_REF.findall(m.get("content") or "") if f in pngs] if m["role"] == "user" else []
+        if not ids:
+            out.append(m)
+            continue
+        text = _FIGURE_REF.sub(
+            "(The student attached an image here: a writing-pad drawing or an uploaded photo/PDF page. "
+            "It is included below. You CAN see it: look at it carefully and respond to what it shows, "
+            "e.g. read handwriting, math, node labels and edges.)",
+            m["content"],
+        )
+        parts = [{"type": "text", "text": text}]
+        parts += [{"type": "image_url", "image_url": {"url": f"data:image/png;base64,{pngs[f]}"}} for f in ids]
+        out.append({"role": "user", "content": parts})
+    logger.warning(f"[DRAWINGS] referenced={len(refs)} found_in_db={len(pngs)} sent_to_model={sum(1 for m in out if isinstance(m['content'], list))}")
+    # If the newest message has a drawing, remind the model it can see images
+    # (earlier replies in the chat may have wrongly said it can't).
+    if out and out[-1]["role"] == "user" and isinstance(out[-1]["content"], list):
+        out.insert(len(out) - 1, {"role": "system", "content": (
+            "The next student message includes images of their work (writing-pad drawings or uploaded files). "
+            "You can see images. Look at the image and respond to exactly what it shows (node labels, edges, "
+            "math). Ignore any earlier reply in this chat that said you cannot view images. "
+            "Keep following your tutoring rules (guide, don't give the final answer)."
+        )})
+    return out
+
+
+def newest_has_drawing(messages_for_api: list) -> bool:
+    return bool(messages_for_api) and isinstance(messages_for_api[-1].get("content"), list)
+
+
+# Reading drawings needs a stronger vision model; only used for messages with a drawing.
+DRAWING_MODEL_ID = _os.getenv("DRAWING_MODEL_ID", "gpt-4o")
+
+
 # ========== SEND CHAT MESSAGE ==========
 
 @router.post("/chat")
@@ -352,11 +408,16 @@ async def chat(request: ChatRequest, auth: HTTPAuthorizationCredentials = Depend
         messages[0] = {"role": "system", "content": SYSTEM_PROMPT}
     # For assignment chats: keep the original system prompt with question details
 
-    # Strip metadata for OpenAI API call (only send role and content)
+    # Strip metadata for OpenAI API call (only send role and content).
+    # Writing-pad drawings ("![...](/figures/<id>)") are sent to the model as real images.
     messages_for_api = [{"role": m["role"], "content": m["content"]} for m in messages]
+    messages_for_api = await attach_drawings_for_model(messages_for_api)
     
     # Use different model based on chat type
     selected_model = ASSIGNMENT_MODEL_ID if is_assignment_chat else MODEL_ID
+    if newest_has_drawing(messages_for_api):
+        selected_model = DRAWING_MODEL_ID
+    logger.warning(f"[DRAWINGS] model={selected_model}")
     
     try:
         # Some assignment models (e.g., gpt-5-mini) don't support temperature parameter
@@ -364,7 +425,7 @@ async def chat(request: ChatRequest, auth: HTTPAuthorizationCredentials = Depend
             "model": selected_model,
             "messages": messages_for_api
         }
-        if selected_model != ASSIGNMENT_MODEL_ID:  # Only add temperature for non-assignment models
+        if selected_model not in (ASSIGNMENT_MODEL_ID, DRAWING_MODEL_ID):  # Only add temperature for non-assignment models
             create_kwargs["temperature"] = 0.7
         
         resp = await client.chat.completions.create(**create_kwargs)
